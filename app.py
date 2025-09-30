@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 # Задаване на заглавие на страницата
-st.set_page_config(page_title="Български Курорти: Времето Преди Година")
+st.set_page_config(page_title="Български Курорти: Времето в Миналото")
 
 # Инициализация на session_state за език
 if 'language' not in st.session_state:
@@ -13,14 +13,15 @@ if 'language' not in st.session_state:
 # Речници за преводи
 translations = {
     'bg': {
-        'title': '🌞⛷️ Български Курорти: Времето Преди Година',
-        'description': 'Избери курорт и виж какво е било времето на **този ден преди година**. Идеално за планиране на почивка! 🇧🇬🏖️🏔️',
+        'title': '🌞⛷️ Български Курорти: Времето в Миналото',
+        'description': 'Избери курорт и дата, за да видиш какво е било времето в миналото. Идеално за планиране на почивка! 🇧🇬🏖️🏔️',
         'select_resort': 'Избери курорт:',
+        'select_date': 'Избери дата:',
         'show_weather': 'Покажи времето',
         'loading': 'Зареждам историческите данни...',
         'weather_success': 'Времето на {} в {}:',
-        'beach_weather': '🕶️ Миналата година е било идеално за плаж! Слънчево и топло.',
-        'rainy_weather': '☔ Било е дъждовно – по-добре планирай вътрешни активности.',
+        'beach_weather': '🕶️ Тогава е било идеално за плаж! Слънчево и топло.',
+        'rainy_weather': '☔ Тогава е било дъждовно – по-добре планирай вътрешни активности.',
         'error': 'Грешка при зареждане на данните: {}',
         'detailed_error': 'Грешка: {}',
         'play_music': 'Пусни музика 🎶',
@@ -28,13 +29,14 @@ translations = {
         'language': 'Смени език: Английски'
     },
     'en': {
-        'title': '🌞⛷️ Bulgarian Resorts: Weather One Year Ago',
-        'description': 'Choose a resort and see what the weather was like **this day last year**. Perfect for planning a vacation! 🇧🇬🏖️🏔️',
+        'title': '🌞⛷️ Bulgarian Resorts: Historical Weather',
+        'description': 'Choose a resort and date to see what the weather was like in the past. Perfect for planning a vacation! 🇧🇬🏖️🏔️',
         'select_resort': 'Select a resort:',
+        'select_date': 'Select date:',
         'show_weather': 'Show Weather',
         'loading': 'Loading historical weather data...',
         'weather_success': 'Weather on {} in {}:',
-        'beach_weather': '🕶️ Last year was perfect for the beach! Sunny and warm.',
+        'beach_weather': '🕶️ It was perfect for the beach! Sunny and warm.',
         'rainy_weather': '☔ It was rainy – better plan indoor activities.',
         'error': 'Error loading data: {}',
         'detailed_error': 'Error: {}',
@@ -48,7 +50,7 @@ translations = {
 resorts = {
     "Sunny Beach": (42.695153, 27.710421),
     "Golden Sands": (43.2843, 28.0383),
-    "Sozopol": (42.4167, 27.7),
+    "Sozopol": (42.4167, 27. vegas odds),
     "Albena": (43.3682, 28.0801),
     "Burgas": (42.510578, 27.461014),
     "Nessebar": (42.659149, 27.736143),
@@ -84,6 +86,10 @@ if st.button(translations[st.session_state.language]['language']):
 # Избор на курорт
 resort = st.selectbox(translations[st.session_state.language]['select_resort'], list(resorts.keys()))
 
+# Избор на дата
+default_date = datetime.now().date() - timedelta(days=365)
+selected_date = st.date_input(translations[st.session_state.language]['select_date'], value=default_date, min_value=datetime(1940, 1, 1).date(), max_value=datetime.now().date())
+
 # Показване на снимка за избрания курорт
 st.image(image_urls[resort], caption=resort, width="stretch")
 
@@ -99,11 +105,9 @@ if st.session_state.playing:
 
 lat, lon = resorts[resort]
 
-# Изчисляване на датите
-today = datetime.now().date()
-last_year = today - timedelta(days=365)
-start_date = last_year.strftime("%Y-%m-%d")
-end_date = last_year.strftime("%Y-%m-%d")
+# Използване на избраната дата
+start_date = selected_date.strftime("%Y-%m-%d")
+end_date = selected_date.strftime("%Y-%m-%d")
 
 # API URL за исторически данни (Open-Meteo archive)
 url_historical = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=Europe/Sofia"
@@ -117,7 +121,7 @@ if st.button(translations[st.session_state.language]['show_weather']):
                 data_h = response_h.json()
                 daily_h = data_h['daily']
                 
-                # DataFrame за исторически
+                # DataFrame за исторически данни
                 df_h = pd.DataFrame({
                     'Date' if st.session_state.language == 'en' else 'Дата': pd.to_datetime(daily_h['time']),
                     'Max Temp (°C)' if st.session_state.language == 'en' else 'Макс. Темп. (°C)': daily_h['temperature_2m_max'],
@@ -126,10 +130,10 @@ if st.button(translations[st.session_state.language]['show_weather']):
                     'Max Wind Speed (km/h)' if st.session_state.language == 'en' else 'Макс. Вятър (km/h)': daily_h['wind_speed_10m_max'],
                 })
                 
-                st.success(translations[st.session_state.language]['weather_success'].format(last_year, resort))
+                st.success(translations[st.session_state.language]['weather_success'].format(selected_date, resort))
                 st.dataframe(df_h, width="stretch")
                 
-                # Туристически съвет за миналата година
+                # Туристически съвет
                 max_temp_h = daily_h['temperature_2m_max'][0]
                 precip_h = daily_h['precipitation_sum'][0]
                 if max_temp_h > 25 and precip_h < 1:
