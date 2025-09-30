@@ -4,14 +4,21 @@ from datetime import datetime, timedelta
 import pandas as pd
 import streamlit.components.v1 as components
 
+# Задаване на заглавие на страницата
+st.set_page_config(page_title="Български Курорти: Времето Преди Година")
+
 # Инжектиране на Open Graph мета тагове чрез JavaScript
 components.html("""
 <script>
-    // Премахваме съществуващи Open Graph тагове
+    // Премахваме съществуващи Open Graph тагове и title
     document.querySelectorAll('meta[property^="og:"]').forEach(tag => tag.remove());
+    document.querySelectorAll('meta[name="title"]').forEach(tag => tag.remove());
+    document.querySelectorAll('meta[name="description"]').forEach(tag => tag.remove());
     
-    // Добавяме нови Open Graph тагове
+    // Добавяме нови мета тагове
     const metaTags = [
+        { name: "title", content: "Български Курорти: Времето Преди Година" },
+        { name: "description", content: "Виж какво е било времето на този ден преди година в любимите български курорти! Идеално за планиране на почивка. 🇧🇬🏖️🏔️" },
         { property: "og:title", content: "Български Курорти: Времето Преди Година" },
         { property: "og:description", content: "Виж какво е било времето на този ден преди година в любимите български курорти! Идеално за планиране на почивка. 🇧🇬🏖️🏔️" },
         { property: "og:image", content: "https://raw.githubusercontent.com/Deyan80/bulgarian-resorts-weather/main/images/sunny_beach.jpg" },
@@ -25,12 +32,16 @@ components.html("""
     
     metaTags.forEach(tag => {
         const meta = document.createElement("meta");
-        meta.setAttribute("property", tag.property);
+        if (tag.property) {
+            meta.setAttribute("property", tag.property);
+        } else {
+            meta.setAttribute("name", tag.name);
+        }
         meta.setAttribute("content", tag.content);
         document.head.appendChild(meta);
     });
     
-    // Задаваме и стандартен title
+    // Задаваме заглавие на страницата
     document.title = "Български Курорти: Времето Преди Година";
 </script>
 """, height=0)
