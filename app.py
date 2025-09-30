@@ -97,7 +97,7 @@ if st.button(translations[st.session_state.language]['language']):
     st.session_state.language = 'en' if st.session_state.language == 'bg' else 'bg'
 
 # Избор на курорт
-resort = st.selectbox(translations[st.session_state.languageispens_state.language]['select_resort'], list(resorts.keys()))
+resort = st.selectbox(translations[st.session_state.language]['select_resort'], list(resorts.keys()))
 
 # Показване на снимка за избрания курорт
 st.image(image_urls[resort], caption=resort, width="stretch")
@@ -191,3 +191,4 @@ if st.button(translations[st.session_state.language]['show_weather']):
         share_to_facebook(resort, last_year)
     else:
         st.error(translations[st.session_state.language]['error'])
+
