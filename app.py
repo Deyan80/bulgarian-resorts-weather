@@ -23,12 +23,11 @@ translations = {
         'detailed_error': 'Грешка: {}',
         'play_music': 'Пусни музика 🎶',
         'stop_music': 'Спри музика',
-        'share_instruction': 'Копирай линка от адресната лента и го сподели във Facebook!',
         'language': 'Смени език: Английски'
     },
     'en': {
         'title': '🌞⛷️ Bulgarian Resorts: Weather One Year Ago',
-        'description': 'Choose a resort and see what the weather was like **this day last year**. Perfect for planning a vacation! 🇧🇬🏖️🏔️',
+        'description': 'Choose a resort and see what the weather was like **this day last year**. Perfect for planning a vacation! 🇬🇴🏖️🏔️',
         'select_resort': 'Select a resort:',
         'show_weather': 'Show Weather',
         'loading': 'Loading historical weather data...',
@@ -39,7 +38,6 @@ translations = {
         'detailed_error': 'Error: {}',
         'play_music': 'Play Music 🎶',
         'stop_music': 'Stop Music',
-        'share_instruction': 'Copy the link from the address bar and share it on Facebook!',
         'language': 'Switch Language: Bulgarian'
     }
 }
@@ -137,9 +135,6 @@ if st.button(translations[st.session_state.language]['show_weather']):
                     st.info(translations[st.session_state.language]['beach_weather'])
                 elif precip_h > 5:
                     st.warning(translations[st.session_state.language]['rainy_weather'])
-                
-                # Инструкция за споделяне
-                st.markdown(translations[st.session_state.language]['share_instruction'])
             else:
                 st.error(translations[st.session_state.language]['error'].format(f"Historical API status: {response_h.status_code}"))
         except Exception as e:
