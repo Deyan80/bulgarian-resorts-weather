@@ -4,6 +4,37 @@ from datetime import datetime, timedelta
 import pandas as pd
 import streamlit.components.v1 as components
 
+# Инжектиране на Open Graph мета тагове чрез JavaScript
+components.html("""
+<script>
+    // Премахваме съществуващи Open Graph тагове
+    document.querySelectorAll('meta[property^="og:"]').forEach(tag => tag.remove());
+    
+    // Добавяме нови Open Graph тагове
+    const metaTags = [
+        { property: "og:title", content: "Български Курорти: Времето Преди Година" },
+        { property: "og:description", content: "Виж какво е било времето на този ден преди година в любимите български курорти! Идеално за планиране на почивка. 🇧🇬🏖️🏔️" },
+        { property: "og:image", content: "https://raw.githubusercontent.com/Deyan80/bulgarian-resorts-weather/main/images/sunny_beach.jpg" },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "Sunny Beach, Bulgaria" },
+        { property: "og:url", content: "https://bulgarian-resorts-weather.onrender.com/" },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Bulgarian Resorts Weather" }
+    ];
+    
+    metaTags.forEach(tag => {
+        const meta = document.createElement("meta");
+        meta.setAttribute("property", tag.property);
+        meta.setAttribute("content", tag.content);
+        document.head.appendChild(meta);
+    });
+    
+    // Задаваме и стандартен title
+    document.title = "Български Курорти: Времето Преди Година";
+</script>
+""", height=0)
+
 # Инициализация на session_state за език
 if 'language' not in st.session_state:
     st.session_state.language = 'bg'
@@ -27,7 +58,7 @@ translations = {
     },
     'en': {
         'title': '🌞⛷️ Bulgarian Resorts: Weather One Year Ago',
-        'description': 'Choose a resort and see what the weather was like **this day last year**. Perfect for planning a vacation! 🇬🇴🏖️🏔️',
+        'description': 'Choose a resort and see what the weather was like **this day last year**. Perfect for planning a vacation! 🇧🇬🏖️🏔️',
         'select_resort': 'Select a resort:',
         'show_weather': 'Show Weather',
         'loading': 'Loading historical weather data...',
@@ -139,4 +170,3 @@ if st.button(translations[st.session_state.language]['show_weather']):
                 st.error(translations[st.session_state.language]['error'].format(f"Historical API status: {response_h.status_code}"))
         except Exception as e:
             st.error(translations[st.session_state.language]['detailed_error'].format(str(e)))
-
