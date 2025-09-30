@@ -50,7 +50,7 @@ translations = {
 resorts = {
     "Sunny Beach": (42.695153, 27.710421),
     "Golden Sands": (43.2843, 28.0383),
-    "Sozopol": (42.4167, 27. vegas odds),
+    "Sozopol": (42.4167, 27.7),
     "Albena": (43.3682, 28.0801),
     "Burgas": (42.510578, 27.461014),
     "Nessebar": (42.659149, 27.736143),
