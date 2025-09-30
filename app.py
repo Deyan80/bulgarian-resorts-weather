@@ -23,6 +23,7 @@ translations = {
         'beach_forecast': '🕶️ Днес се очаква идеално за плаж! Слънчево и топло.',
         'rainy_forecast': '☔ Очаква се дъжд – по-добре планирай вътрешни активности.',
         'error': 'Грешка при зареждане на данните. Провери връзката си с интернет.',
+        'detailed_error': 'Грешка: {}',
         'play_music': 'Пусни музика 🎶',
         'stop_music': 'Спри музика',
         'share_facebook': 'Сподели във Facebook',
@@ -41,6 +42,7 @@ translations = {
         'beach_forecast': '🕶️ Today is expected to be perfect for the beach! Sunny and warm.',
         'rainy_forecast': '☔ Rain expected – better plan indoor activities.',
         'error': 'Error loading data. Please check your internet connection.',
+        'detailed_error': 'Error: {}',
         'play_music': 'Play Music 🎶',
         'stop_music': 'Stop Music',
         'share_facebook': 'Share on Facebook',
@@ -95,10 +97,10 @@ if st.button(translations[st.session_state.language]['language']):
     st.session_state.language = 'en' if st.session_state.language == 'bg' else 'bg'
 
 # Избор на курорт
-resort = st.selectbox(translations[st.session_state.language]['select_resort'], list(resorts.keys()))
+resort = st.selectbox(translations[st.session_state.languageispens_state.language]['select_resort'], list(resorts.keys()))
 
 # Показване на снимка за избрания курорт
-st.image(image_urls[resort], caption=resort, use_container_width=True)
+st.image(image_urls[resort], caption=resort, width="stretch")
 
 # Бутон за музика
 if 'playing' not in st.session_state:
@@ -128,11 +130,13 @@ url_forecast = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude
 # Изпращане на заявка
 if st.button(translations[st.session_state.language]['show_weather']):
     with st.spinner(translations[st.session_state.language]['loading']):
-        # Исторически данни
-        response_h = requests.get(url_historical)
-        # Прогнозни данни
-        response_f = requests.get(url_forecast)
-    
+        try:
+            response_h = requests.get(url_historical)
+            response_f = requests.get(url_forecast)
+        except Exception as e:
+            st.error(translations[st.session_state.language]['detailed_error'].format(str(e)))
+            st.stop()
+
     if response_h.status_code == 200 and response_f.status_code == 200:
         data_h = response_h.json()
         daily_h = data_h['daily']
@@ -147,7 +151,7 @@ if st.button(translations[st.session_state.language]['show_weather']):
         })
         
         st.success(translations[st.session_state.language]['weather_success'].format(last_year, resort))
-        st.dataframe(df_h, use_container_width=True)
+        st.dataframe(df_h, width="stretch")
         
         # Туристически съвет за миналата година
         max_temp_h = daily_h['temperature_2m_max'][0]
@@ -172,7 +176,7 @@ if st.button(translations[st.session_state.language]['show_weather']):
         })
         
         st.success(translations[st.session_state.language]['forecast_success'].format(today_str, resort))
-        st.dataframe(df_f, use_container_width=True)
+        st.dataframe(df_f, width="stretch")
         
         # Туристически съвет за прогнозата
         max_temp_f = daily_f['temperature_2m_max'][0]
