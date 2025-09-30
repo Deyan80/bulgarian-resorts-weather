@@ -17,8 +17,11 @@ translations = {
         'show_weather': 'Покажи времето',
         'loading': 'Зареждам историческите данни...',
         'weather_success': 'Времето на {} в {}:',
+        'forecast_success': 'Прогноза за времето днес ({}) в {}:',
         'beach_weather': '🕶️ Миналата година е било идеално за плаж! Слънчево и топло.',
         'rainy_weather': '☔ Било е дъждовно – по-добре планирай вътрешни активности.',
+        'beach_forecast': '🕶️ Днес се очаква идеално за плаж! Слънчево и топло.',
+        'rainy_forecast': '☔ Очаква се дъжд – по-добре планирай вътрешни активности.',
         'error': 'Грешка при зареждане на данните. Провери връзката си с интернет.',
         'play_music': 'Пусни музика 🎶',
         'stop_music': 'Спри музика',
@@ -32,8 +35,11 @@ translations = {
         'show_weather': 'Show Weather',
         'loading': 'Loading historical weather data...',
         'weather_success': 'Weather on {} in {}:',
+        'forecast_success': 'Weather Forecast for today ({}) in {}:',
         'beach_weather': '🕶️ Last year was perfect for the beach! Sunny and warm.',
         'rainy_weather': '☔ It was rainy – better plan indoor activities.',
+        'beach_forecast': '🕶️ Today is expected to be perfect for the beach! Sunny and warm.',
+        'rainy_forecast': '☔ Rain expected – better plan indoor activities.',
         'error': 'Error loading data. Please check your internet connection.',
         'play_music': 'Play Music 🎶',
         'stop_music': 'Stop Music',
@@ -71,22 +77,6 @@ image_urls = {
 }
 music_url = "https://raw.githubusercontent.com/Deyan80/bulgarian-resorts-weather/main/audio/tourist_music.mp3"
 
-# Задаване на Open Graph мета тагове в head
-def set_open_graph_tags(resort, date):
-    og_image = image_urls.get(resort, "")
-    og_title = translations[st.session_state.language]['title']
-    og_description = translations[st.session_state.language]['weather_success'].format(date, resort)
-    components.html(f"""
-        <script>
-            document.head.innerHTML += `
-                <meta property="og:title" content="{og_title}">
-                <meta property="og:description" content="{og_description}">
-                <meta property="og:image" content="{og_image}">
-                <meta property="og:url" content="https://bulgarian-resorts-weather.onrender.com">
-            `;
-        </script>
-    """, height=0)
-
 # Функция за споделяне във Facebook
 def share_to_facebook(resort, date):
     share_url = "https://bulgarian-resorts-weather.onrender.com"
@@ -110,9 +100,6 @@ resort = st.selectbox(translations[st.session_state.language]['select_resort'], 
 # Показване на снимка за избрания курорт
 st.image(image_urls[resort], caption=resort, use_container_width=True)
 
-# Задаване на Open Graph мета тагове за избрания курорт
-set_open_graph_tags(resort, (datetime.now().date() - timedelta(days=365)).strftime("%Y-%m-%d"))
-
 # Бутон за музика
 if 'playing' not in st.session_state:
     st.session_state.playing = False
@@ -125,44 +112,76 @@ if st.session_state.playing:
 
 lat, lon = resorts[resort]
 
-# Изчисляване на датата преди година
+# Изчисляване на датите
 today = datetime.now().date()
 last_year = today - timedelta(days=365)
 start_date = last_year.strftime("%Y-%m-%d")
 end_date = last_year.strftime("%Y-%m-%d")
+today_str = today.strftime("%Y-%m-%d")
 
-# API URL за Open-Meteo
-url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=Europe/Sofia"
+# API URL за исторически данни (Open-Meteo archive)
+url_historical = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=Europe/Sofia"
+
+# API URL за прогноза (Open-Meteo forecast, за днес)
+url_forecast = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=Europe/Sofia"
 
 # Изпращане на заявка
 if st.button(translations[st.session_state.language]['show_weather']):
     with st.spinner(translations[st.session_state.language]['loading']):
-        response = requests.get(url)
+        # Исторически данни
+        response_h = requests.get(url_historical)
+        # Прогнозни данни
+        response_f = requests.get(url_forecast)
     
-    if response.status_code == 200:
-        data = response.json()
-        daily = data['daily']
+    if response_h.status_code == 200 and response_f.status_code == 200:
+        data_h = response_h.json()
+        daily_h = data_h['daily']
         
-        # Създаване на DataFrame
-        df = pd.DataFrame({
-            'Date' if st.session_state.language == 'en' else 'Дата': pd.to_datetime(daily['time']),
-            'Max Temp (°C)' if st.session_state.language == 'en' else 'Макс. Темп. (°C)': daily['temperature_2m_max'],
-            'Min Temp (°C)' if st.session_state.language == 'en' else 'Мин. Темп. (°C)': daily['temperature_2m_min'],
-            'Precipitation (mm)' if st.session_state.language == 'en' else 'Валежи (mm)': daily['precipitation_sum'],
-            'Max Wind Speed (km/h)' if st.session_state.language == 'en' else 'Макс. Вятър (km/h)': daily['wind_speed_10m_max'],
+        # DataFrame за исторически
+        df_h = pd.DataFrame({
+            'Date' if st.session_state.language == 'en' else 'Дата': pd.to_datetime(daily_h['time']),
+            'Max Temp (°C)' if st.session_state.language == 'en' else 'Макс. Темп. (°C)': daily_h['temperature_2m_max'],
+            'Min Temp (°C)' if st.session_state.language == 'en' else 'Мин. Темп. (°C)': daily_h['temperature_2m_min'],
+            'Precipitation (mm)' if st.session_state.language == 'en' else 'Валежи (mm)': daily_h['precipitation_sum'],
+            'Max Wind Speed (km/h)' if st.session_state.language == 'en' else 'Макс. Вятър (km/h)': daily_h['wind_speed_10m_max'],
         })
         
         st.success(translations[st.session_state.language]['weather_success'].format(last_year, resort))
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df_h, use_container_width=True)
         
-        # Туристически съвет
-        max_temp = daily['temperature_2m_max'][0]
-        precip = daily['precipitation_sum'][0]
-        if max_temp > 25 and precip < 1:
+        # Туристически съвет за миналата година
+        max_temp_h = daily_h['temperature_2m_max'][0]
+        precip_h = daily_h['precipitation_sum'][0]
+        if max_temp_h > 25 and precip_h < 1:
             st.balloons()
             st.info(translations[st.session_state.language]['beach_weather'])
-        elif precip > 5:
+        elif precip_h > 5:
             st.warning(translations[st.session_state.language]['rainy_weather'])
+        
+        # Прогнозни данни (взимаме първия ден - днес)
+        data_f = response_f.json()
+        daily_f = data_f['daily']
+        
+        # DataFrame за прогноза
+        df_f = pd.DataFrame({
+            'Date' if st.session_state.language == 'en' else 'Дата': pd.to_datetime(daily_f['time'][0:1]),
+            'Max Temp (°C)' if st.session_state.language == 'en' else 'Макс. Темп. (°C)': daily_f['temperature_2m_max'][0:1],
+            'Min Temp (°C)' if st.session_state.language == 'en' else 'Мин. Темп. (°C)': daily_f['temperature_2m_min'][0:1],
+            'Precipitation (mm)' if st.session_state.language == 'en' else 'Валежи (mm)': daily_f['precipitation_sum'][0:1],
+            'Max Wind Speed (km/h)' if st.session_state.language == 'en' else 'Макс. Вятър (km/h)': daily_f['wind_speed_10m_max'][0:1],
+        })
+        
+        st.success(translations[st.session_state.language]['forecast_success'].format(today_str, resort))
+        st.dataframe(df_f, use_container_width=True)
+        
+        # Туристически съвет за прогнозата
+        max_temp_f = daily_f['temperature_2m_max'][0]
+        precip_f = daily_f['precipitation_sum'][0]
+        if max_temp_f > 25 and precip_f < 1:
+            st.balloons()
+            st.info(translations[st.session_state.language]['beach_forecast'])
+        elif precip_f > 5:
+            st.warning(translations[st.session_state.language]['rainy_forecast'])
         
         # Бутон за споделяне във Facebook
         share_to_facebook(resort, last_year)
