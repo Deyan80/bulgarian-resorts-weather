@@ -139,7 +139,7 @@ if st.button(translations[st.session_state.language]['show_weather']):
 
     if response_h.status_code == 200 and response_f.status_code == 200:
         try:
-            data_h = responseZyXz response_h.json()
+            data_h = response_h.json()
             data_f = response_f.json()
             daily_h = data_h['daily']
             daily_f = data_f['daily']
